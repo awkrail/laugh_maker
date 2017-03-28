@@ -9,6 +9,15 @@ from chainer.datasets import tuple_dataset
 import random
 
 
+def load_freq_data(h_or_l, number):
+    with open('data/Freq/%s/%d.csv' % (h_or_l, number), 'r') as f:
+        reader = csv.reader(f)
+        np_data = [np.array(row, dtype=np.float32) for row in reader]
+
+    label_data = [np.int32(number) for _ in np_data]
+
+    return np_data, label_data
+
 def load_raw_data(number):
     with open('data/Raw/%d.csv' % number, 'r') as f:
         reader = csv.reader(f)
@@ -17,6 +26,7 @@ def load_raw_data(number):
     label_data = [np.int32(number) for _ in np_data]
 
     return np_data, label_data
+
 
 def shuffle_ary(np_ary, label_ary):
     before_ary = [(np_data, label) for np_data, label in zip(np_ary, label_ary)]
@@ -42,9 +52,24 @@ class LaughNet(chainer.Chain):
 
         return h
 
+class LaughNeuralNet(chainer.Chain):
+    def __init__(self):
+        super(LaughNeuralNet, self).__init__(
+            l1=L.Linear(None, 200),
+            l2=L.Linear(None, 100),
+            l3=L.Linear(None, 2)
+        )
+
+    def __call__(self, x):
+        h = F.dropout(F.relu(self.l1(x)))
+        h = F.dropout(F.relu(self.l2(h)))
+        h = self.l3(h)
+
+        return h
 
 # model define
-model = LaughNet()
+# model = LaughNet()
+model = LaughNeuralNet()
 classify_model = L.Classifier(model)
 optimizer = chainer.optimizers.Adam()
 optimizer.setup(classify_model)
@@ -80,21 +105,3 @@ trainer.extend(extensions.PlotReport(y_keys='validation/main/accuracy', file_nam
 trainer.extend(extensions.PrintReport(['epoch', 'main/loss', 'validation/main/loss', 'main/accuracy', 'validation/main/accuracy']))
 
 trainer.run()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
