@@ -101,7 +101,8 @@ trainer.extend(extensions.PlotReport(y_keys='main/loss', file_name='main_loss.pn
 trainer.extend(extensions.PlotReport(y_keys='main/accuracy', file_name='main_acc.png'))
 trainer.extend(extensions.PlotReport(y_keys='validation/main/loss', file_name='overfitting.png'))
 trainer.extend(extensions.PlotReport(y_keys='validation/main/accuracy', file_name='validation_acc.png'))
-
 trainer.extend(extensions.PrintReport(['epoch', 'main/loss', 'validation/main/loss', 'main/accuracy', 'validation/main/accuracy']))
 
 trainer.run()
+
+chainer.serializers.save_npz("neural_model", model)
