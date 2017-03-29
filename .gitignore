@@ -2,3 +2,6 @@ data
 .idea
 .DS_Store
 result
+models
+predict
+neural_model
