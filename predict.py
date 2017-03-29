@@ -22,12 +22,41 @@ class LaughNeuralNet(chainer.Chain):
 
         return h
 
+# test predicting
+def test_predict():
+    with open('data/Raw/0.csv', 'r') as f:
+        reader = csv.reader(f)
+        csv0 = [(np.array(row, dtype=np.float32), 0) for row in reader]
+
+    with open('data/Raw/1.csv', 'r') as f:
+        reader = csv.reader(f)
+        csv1 = [(np.array(row, dtype=np.float32), 1) for row in reader]
+
+    all_ary = csv0 + csv1
+    ans_counts = 0
+    question_num = len(all_ary)
+
+    for data in all_ary:
+        correct = data[1]
+        np_data = data[0].reshape(1, 10)
+        y = np.argmax(F.sigmoid(model(np_data)).data)
+        if y == correct:
+            ans_counts += 1
+
+    print('accuracy:', str(ans_counts / question_num))
+
+
 # model set
 model = LaughNeuralNet()
 chainer.serializers.load_npz("neural_model", model)
 # predict
+"""
 pdt = np.array([0.38369206, 0.386085559, 0.412592659, 0.436813432, 0.458962222, 0.481111012, 0.519335536, 0.554166295, 0.588639814, 0.61436099
 ], dtype=np.float32)
 pdt = pdt.reshape(1, 10)
 y = model(pdt)
 print(F.sigmoid(y).data)
+"""
+test_predict()
+
+
