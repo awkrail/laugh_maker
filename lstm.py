@@ -43,6 +43,7 @@ class LaughNet(chainer.Chain):
         return h
 
 
+
 # model define
 model = LaughNet()
 classify_model = L.Classifier(model)

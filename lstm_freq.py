@@ -39,15 +39,15 @@ def shuffle_ary(np_ary, label_ary):
 class LaughNet(chainer.Chain):
     def __init__(self):
         super(LaughNet, self).__init__(
-            l1=L.LSTM(None, 20),
+            l1=L.LSTM(None, 200),
             l2=L.Linear(None, 100),
             l3=L.Linear(None, 2)
         )
 
     def __call__(self, x):
         self.l1.reset_state()
-        h = self.l1(x)
-        h = F.dropout(self.l2(h))
+        h = F.relu(self.l1(x))
+        h = F.dropout(F.relu(self.l2(h)))
         h = self.l3(h)
 
         return h
@@ -66,6 +66,32 @@ class LaughNeuralNet(chainer.Chain):
         h = self.l3(h)
 
         return h
+
+
+class LaughNeuralNet2(chainer.Chain):
+    def __init__(self):
+        super(LaughNeuralNet, self).__init__(
+            l1=L.Linear(None, 1000),
+            b1=L.BatchNormalization(1000),
+            l2=L.Linear(None, 1000),
+            b2=L.BatchNormalization(1000),
+            l3=L.Linear(None, 1000),
+            l4=L.Linear(None, 500),
+            b3=L.BatchNormalization(500),
+            l5=L.Linear(None, 500),
+            l6=L.Linear(None, 2)
+        )
+
+    def __call__(self, x):
+        h = F.dropout(self.b1(F.relu(self.l1(x))))
+        h = F.dropout(self.b2(F.relu(self.l2(h))))
+        h = F.dropout(F.relu(self.l3(h)))
+        h = F.dropout(self.b3(F.relu(self.l4(h))))
+        h = F.dropout(F.relu(self.l5(h)))
+        h = self.l6(h)
+
+        return h
+
 
 # model define
 # model = LaughNet()
@@ -94,7 +120,7 @@ train_iter = chainer.iterators.SerialIterator(train, 100, shuffle=True)
 test_iter = chainer.iterators.SerialIterator(test, 100, repeat=False, shuffle=False)
 
 updater = training.StandardUpdater(train_iter, optimizer, device=-1)
-trainer = training.Trainer(updater, (100, 'epoch'), out='result')
+trainer = training.Trainer(updater, (50, 'epoch'), out='result')
 trainer.extend(extensions.Evaluator(test_iter, classify_model, device=-1))
 trainer.extend(extensions.LogReport())
 trainer.extend(extensions.PlotReport(y_keys='main/loss', file_name='main_loss.png'))
