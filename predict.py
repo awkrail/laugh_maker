@@ -39,7 +39,7 @@ def test_predict():
     for data in all_ary:
         correct = data[1]
         np_data = data[0].reshape(1, 10)
-        y = np.argmax(F.sigmoid(model(np_data)).data)
+        y = np.argmax(F.softmax(model(np_data)).data)
         if y == correct:
             ans_counts += 1
 
