@@ -3,9 +3,7 @@ import csv
 import chainer
 import chainer.functions as F
 import chainer.links as L
-from chainer import training
-from chainer.training import extensions
-from chainer.datasets import tuple_dataset
+import sys
 
 class LaughNeuralNet(chainer.Chain):
     def __init__(self):
@@ -22,8 +20,45 @@ class LaughNeuralNet(chainer.Chain):
 
         return h
 
+class LaughNeuralNet2(chainer.Chain):
+    def __init__(self):
+        super(LaughNeuralNet2, self).__init__(
+            l1=L.Linear(None, 1000),
+            b1=L.BatchNormalization(1000),
+            l2=L.Linear(None, 1000),
+            b2=L.BatchNormalization(1000),
+            l3=L.Linear(None, 1000),
+            l4=L.Linear(None, 500),
+            b3=L.BatchNormalization(500),
+            l5=L.Linear(None, 500),
+            l6=L.Linear(None, 2)
+        )
+
+    def __call__(self, x):
+        h = F.dropout(self.b1(F.relu(self.l1(x))))
+        h = F.dropout(self.b2(F.relu(self.l2(h))))
+        h = F.dropout(F.relu(self.l3(h)))
+        h = F.dropout(self.b3(F.relu(self.l4(h))))
+        h = F.dropout(F.relu(self.l5(h)))
+        h = self.l6(h)
+
+        return h
+
+
 # test predicting
-def test_predict():
+def test_predict(path):
+    model = None
+
+    if path == 'simple_neural_model':
+        model = LaughNeuralNet()
+    elif path == 'complex_neural_model':
+        model = LaughNeuralNet2()
+
+    if model is None:
+        return 'モデルのパラメータがない'
+
+    chainer.serializers.load_npz(path, model)
+
     with open('data/Raw/0.csv', 'r') as f:
         reader = csv.reader(f)
         csv0 = [(np.array(row, dtype=np.float32), 0) for row in reader]
@@ -46,17 +81,7 @@ def test_predict():
     print('accuracy:', str(ans_counts / question_num))
 
 
-# model set
-model = LaughNeuralNet()
-chainer.serializers.load_npz("neural_model", model)
 # predict
-"""
-pdt = np.array([0.38369206, 0.386085559, 0.412592659, 0.436813432, 0.458962222, 0.481111012, 0.519335536, 0.554166295, 0.588639814, 0.61436099
-], dtype=np.float32)
-pdt = pdt.reshape(1, 10)
-y = model(pdt)
-print(F.sigmoid(y).data)
-"""
-test_predict()
+test_predict(sys.argv[1])
 
 
