@@ -57,7 +57,7 @@ def test_predict(path):
     if model is None:
         return 'モデルのパラメータがない'
 
-    chainer.serializers.load_npz(path, model)
+    chainer.serializers.load_npz('params/' + path, model)
 
     with open('data/Raw/0.csv', 'r') as f:
         reader = csv.reader(f)
