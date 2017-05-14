@@ -18,6 +18,7 @@ def load_raw_data(number):
 
     return np_data, label_data
 
+
 def shuffle_ary(np_ary, label_ary):
     before_ary = [(np_data, label) for np_data, label in zip(np_ary, label_ary)]
     random.shuffle(before_ary)
@@ -25,6 +26,7 @@ def shuffle_ary(np_ary, label_ary):
     af_label_ary = [data[1] for data in before_ary]
 
     return af_np_ary, af_label_ary
+
 
 class LaughNet(chainer.Chain):
     def __init__(self):
