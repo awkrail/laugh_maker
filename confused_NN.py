@@ -51,7 +51,7 @@ class LaughNet(chainer.Chain):
 
 
 def main():
-    zero_data = ProcessData('confused_data/Raw/0.csv', 0)
+    zero_data = ProcessData('confused_data/Raw/fixed_0.csv', 0)
     one_data = ProcessData('confused_data/Raw/1.csv', 1)
 
     zero_gen = zero_data.load_data()
@@ -59,6 +59,7 @@ def main():
 
     all_data = ProcessData.shuffle(list(zero_gen), list(one_gen))
     all_ary = list(all_data)
+
 
     # make_chainer_datasets and iterator
     threshold = np.int32(len(all_ary) / 5 * 4)

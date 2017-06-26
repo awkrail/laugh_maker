@@ -10,7 +10,7 @@ import random
 
 
 def load_raw_data(number):
-    with open('data/Raw/%d.csv' % number, 'r') as f:
+    with open('confused_data/five_sec/%d.csv' % number, 'r') as f:
         reader = csv.reader(f)
         np_data = [np.array(row, dtype=np.float32) for row in reader]
 
@@ -31,7 +31,7 @@ def shuffle_ary(np_ary, label_ary):
 class LaughNet(chainer.Chain):
     def __init__(self):
         super(LaughNet, self).__init__(
-            l1=L.LSTM(None, 20),
+            l1=L.LSTM(None, 200),
             l2=L.Linear(None, 100),
             l3=L.Linear(None, 2)
         )
@@ -45,6 +45,20 @@ class LaughNet(chainer.Chain):
         return h
 
 
+class LaughNet2(chainer.Chain):
+    def __init__(self):
+        super(LaughNet2, self).__init__(
+            l1=L.Linear(None, 200),
+            l2=L.Linear(None, 100),
+            l3=L.Linear(None, 2)
+        )
+
+    def __call__(self, x):
+        h = F.dropout(F.relu(self.l1(x)))
+        h = F.dropout(F.relu(self.l2(h)))
+        h = self.l3(h)
+
+        return h
 
 # model define
 model = LaughNet()
@@ -55,6 +69,8 @@ optimizer.setup(classify_model)
 # row_data_csv_load
 np_csv0, np_label0 = load_raw_data(0)
 np_csv1, np_label1 = load_raw_data(1)
+
+print(len(np_csv0[0]))
 
 # all_ary
 all_ary = np_csv0 + np_csv1
@@ -72,7 +88,7 @@ train_iter = chainer.iterators.SerialIterator(train, 100, shuffle=True)
 test_iter = chainer.iterators.SerialIterator(test, 100, repeat=False, shuffle=False)
 
 updater = training.StandardUpdater(train_iter, optimizer, device=-1)
-trainer = training.Trainer(updater, (100, 'epoch'), out='result')
+trainer = training.Trainer(updater, (500, 'epoch'), out='result3')
 trainer.extend(extensions.Evaluator(test_iter, classify_model, device=-1))
 trainer.extend(extensions.LogReport())
 trainer.extend(extensions.PlotReport(y_keys='main/loss', file_name='main_loss.png'))
@@ -84,6 +100,7 @@ trainer.extend(extensions.PrintReport(['epoch', 'main/loss', 'validation/main/lo
 
 trainer.run()
 
+chainer.serializers.save_npz("movie_model_simple", model)
 
 
 
