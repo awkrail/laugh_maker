@@ -17,18 +17,37 @@ class ConvolutionFilterNet(chainer.Chain):
         )
 
     def __call__(self, x):
-        h = F.max_pooling_2d(F.relu(self.l1(x)))
-        h = F.max_pooling_2d(F.relu(self.l2(h)))
+        h = F.max_pooling_2d(F.relu(self.l1(x)), 0, 1)
+        h = F.max_pooling_2d(F.relu(self.l2(h)), 0, 1)
         h = F.dropout(F.relu(self.l3(h)))
         h = self.l4(h)
 
         return h
 
+
+class ConvolutionFilterNet2(chainer.Chain):
+    def __init__(self):
+        super(ConvolutionFilterNet2, self).__init__(
+            l1=L.Convolution2D(None, 100, 2, 1, 0),
+            l2=L.Convolution2D(None, 150, 2, 1, 0),
+            l3=L.Linear(None, 200),
+            l4=L.Linear(None, 2)
+        )
+
+    def __call__(self, x):
+        h = F.max_pooling_2d(F.relu(self.l1(x)), 2)
+        h = F.max_pooling_2d(F.relu(self.l2(h)), 2)
+        h = F.dropout(F.relu(self.l3(h)))
+        h = self.l4(h)
+
+        return h
+
+
 # setup model
-model = ConvolutionFilterNet()
+model = ConvolutionFilterNet2()
 classifier_model = L.Classifier(model)
 optimizer = chainer.optimizers.Adam()
-optimizer.setup(model)
+optimizer.setup(classifier_model)
 
 # data
 all_data = MatrixSensorData()
@@ -39,7 +58,7 @@ train, test = all_data.divide_train_and_validation()
 train_iter = chainer.iterators.SerialIterator(train, 100, shuffle=True)
 test_iter = chainer.iterators.SerialIterator(test, 100, repeat=False, shuffle=False)
 
-updater = training.StandardUpdater(train_iter, optimizer, device=-1)
+updater = training.StandardUpdater(train_iter, optimizer, device=0)
 trainer = training.Trainer(updater, (50, 'epoch'), out='result3')
 trainer.extend(extensions.Evaluator(test_iter, classifier_model, device=0))
 trainer.extend(extensions.LogReport())

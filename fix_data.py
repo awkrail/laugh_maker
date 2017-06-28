@@ -49,7 +49,7 @@ class MatrixSensorData(object):
     def make_50dim_array(ary_1dim, answer):
         tmp_ary = []
         tmp_50dim = []
-        iter_count = 1
+        iter_count = 0
         for _, data in ary_1dim.iterrows():
             if iter_count == 50:
                 tmp_50dim.append((np.array(tmp_ary, dtype=np.float32), np.int32(answer)))
