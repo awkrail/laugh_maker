@@ -35,6 +35,7 @@ if __name__ == '__main__':
 
     ans_counts = 0
     incorrect_counts = 0
+    one_counts = 0
     question_num = len(all_ary)
     plt_ary = []
     answer_row = []
@@ -44,6 +45,9 @@ if __name__ == '__main__':
         answer = data[1]
         y = np.argmax(F.softmax(model(val_np)).data)
         answer_row.append([i, y])
+        # 適合率の計算用
+        if answer == 1:
+            one_counts += 1
         if y == answer:
             ans_counts += 1
             plt_ary.append((model(val_np).data, y, 1))
@@ -89,10 +93,11 @@ if __name__ == '__main__':
     np_plt_x0 = np.array(x_ary0, dtype=np.float32)
     np_plt_y0 = np.array(y_ary0, dtype=np.float32)
 
-    print('1だとおもったら->0: ', len(incorrect_x0))
-    print('0だとおもったら->1: ', len(incorrect_x1))
+    print('0だとおもったら->1: ', len(incorrect_x0))
+    print('1だとおもったら->0: ', len(incorrect_x1))
     print('1だとおもったら->1: ', len(x_ary1))
     print('0だとおもったら->0: ', len(x_ary0))
+    print('recall rate: ', len(x_ary1) / one_counts)
 
     np_plt_x1 = np.array(x_ary1, dtype=np.float32)
     np_plt_y1 = np.array(y_ary1, dtype=np.float32)
@@ -108,4 +113,5 @@ if __name__ == '__main__':
     # plt.plot(np_incorrectx0, np_incorrecty0, 'o', color='g', alpha=0.5)
     # plt.plot(np_incorrectx1, np_incorrecty1, 'o', color='m', alpha=0.5)
     plt.show()
+
 
