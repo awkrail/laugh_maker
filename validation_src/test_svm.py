@@ -12,11 +12,11 @@ class Daily50dimClass(object):
         self.num_0 = 0
 
     def load_csv(self):
-        with open('dim50_daily_fixed.csv', 'r') as f:
+        with open('validation.csv', 'r') as f:
             reader = csv.reader(f)
             for row in reader:
-                self.daily_ary.append(row[0:50])
-                self.label_ary.append(int(row[50]))
+                self.daily_ary.append(row[:-1])
+                self.label_ary.append(int(row[-1]))
                 if int(row[50]) == 1:
                     self.recall_num += 1
                 else:
@@ -40,8 +40,6 @@ def main():
     answer_one_num = daily_data.recall_num
     answer_zero_num = daily_data.num_0
 
-    answer_one = 0
-
     for data, label in zip(daily_data.daily_ary, daily_data.label_ary):
         answer = clf.predict([data])
         if answer == label:
@@ -56,7 +54,7 @@ def main():
     print('answer_zero_num: ', answer_zero_num)
     print('daily data accuracy: ', accuracy / question_num)
     print('recall rate: ', recall / answer_one_num)
-    print('answer one number: ', answer_one)
+    print(recall)
 
 
 if __name__ == '__main__':

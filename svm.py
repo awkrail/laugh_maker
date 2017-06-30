@@ -3,7 +3,8 @@ from sklearn.model_selection import train_test_split
 import numpy as np
 from sklearn.externals import joblib
 import csv
-from lstm import DailyDataLoader
+import os
+import random
 
 class Ary4SvmClass(object):
     def __init__(self):
@@ -23,9 +24,38 @@ class Ary4SvmClass(object):
             self.answer1 = [1 for _ in range(len(self.ary1))]
 
 
+class DailyDataLoader(object):
+    def __init__(self):
+        self.ary0 = []
+        self.answer0 = []
+        self.ary1 = []
+        self.answer1 = []
+
+    def load_csv(self):
+        directories = os.listdir('train_daily_many')
+        for directory in directories:
+            with open('train_daily_many/' + directory, 'r') as f:
+                reader = csv.reader(f)
+                for row in reader:
+                    if int(row[-1]) == 0:
+                        self.ary0.append((np.array(row[:-1], dtype=np.float32), 0))
+                    else:
+                        self.ary1.append((np.array(row[:-1], dtype=np.float32), 1))
+
+    def shuffle_ary(self):
+        ary1_length = len(self.ary1)
+        shuffled_ary0 = random.sample(self.ary0, ary1_length)
+
+        self.ary0 = [tuple_data[0] for tuple_data in shuffled_ary0]
+        self.answer0 = [0 for _ in range(len(self.ary0))]
+        self.ary1 = [tuple_data[0] for tuple_data in self.ary1]
+        self.answer1 = [1 for _ in range(len(self.ary1))]
+
+
 def main():
-    raw_data = Ary4SvmClass()
+    raw_data = DailyDataLoader()
     raw_data.load_csv()
+    raw_data.shuffle_ary()
 
     # 全部のデータを獲得する
     all_data = np.array(raw_data.ary0 + raw_data.ary1, dtype=np.float32)
