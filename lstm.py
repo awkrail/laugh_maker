@@ -39,7 +39,14 @@ class DailyDataLoader(object):
             with open('daily_data/mean/' + directory, 'r') as f:
                 reader = csv.reader(f)
                 for row in reader:
-                    self.tuple_ary.append((np.array(row[:-1],dtype=np.float32), np.array(row[-1], dtype=np.int32)))
+                    self.tuple_ary.append((np.array(row[:-1], dtype=np.float32), np.array(row[-1], dtype=np.int32)))
+
+    def select_1data(self):
+        traning_1_ary = [tuple_data for tuple_data in self.tuple_ary if tuple_data[1] == 1]
+        training_0_ary = [tuple_data for tuple_data in self.tuple_ary if tuple_data[1] == 0]
+
+        training_0_ary = random.sample(training_0_ary, len(traning_1_ary)*2)
+        self.tuple_ary = traning_1_ary + training_0_ary
 
     def shuffle_ary(self):
         random.shuffle(self.tuple_ary)

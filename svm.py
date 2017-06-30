@@ -3,7 +3,7 @@ from sklearn.model_selection import train_test_split
 import numpy as np
 from sklearn.externals import joblib
 import csv
-
+from lstm import DailyDataLoader
 
 class Ary4SvmClass(object):
     def __init__(self):
