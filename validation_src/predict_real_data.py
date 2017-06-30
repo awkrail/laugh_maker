@@ -26,7 +26,7 @@ class LaughNet(chainer.Chain):
 # testscript
 if __name__ == '__main__':
     model = LaughNet()
-    chainer.serializers.load_npz('movie_model', model)
+    chainer.serializers.load_npz('movie_model_simple', model)
     all_ary = []
 
     with open('validation.csv', 'r') as f:

@@ -7,6 +7,7 @@ from chainer import training
 from chainer.training import extensions
 from chainer.datasets import tuple_dataset
 import random
+import os
 
 
 def load_raw_data(number):
@@ -26,6 +27,26 @@ def shuffle_ary(np_ary, label_ary):
     af_label_ary = [data[1] for data in before_ary]
 
     return af_np_ary, af_label_ary
+
+
+class DailyDataLoader(object):
+    def __init__(self):
+        self.tuple_ary = []
+
+    def load_csv(self):
+        directories = os.listdir('daily_data/mean')
+        for directory in directories:
+            with open('daily_data/mean/' + directory, 'r') as f:
+                reader = csv.reader(f)
+                for row in reader:
+                    self.tuple_ary.append((np.array(row[:-1],dtype=np.float32), np.array(row[-1], dtype=np.int32)))
+
+    def shuffle_ary(self):
+        random.shuffle(self.tuple_ary)
+        af_data_ary = [tuple_data[0] for tuple_data in self.tuple_ary]
+        af_label_ary = [tuple_data[1] for tuple_data in self.tuple_ary]
+
+        return af_data_ary, af_label_ary
 
 
 class LaughNet(chainer.Chain):
@@ -67,17 +88,23 @@ optimizer = chainer.optimizers.Adam()
 optimizer.setup(classify_model)
 
 # row_data_csv_load
-np_csv0, np_label0 = load_raw_data(0)
-np_csv1, np_label1 = load_raw_data(1)
+# np_csv0, np_label0 = load_raw_data(0)
+# np_csv1, np_label1 = load_raw_data(1)
 
-print(len(np_csv0[0]))
+# print(len(np_csv0[0]))
 
 # all_ary
-all_ary = np_csv0 + np_csv1
-all_label = np_label0 + np_label1
+# all_ary = np_csv0 + np_csv1
+# all_label = np_label0 + np_label1
 
 # after_shuffle_data
-all_ary, all_label = shuffle_ary(all_ary, all_label)
+# all_ary, all_label = shuffle_ary(all_ary, all_label)
+
+daily_data = DailyDataLoader()
+daily_data.load_csv()
+all_ary, all_label = daily_data.shuffle_ary()
+
+# import ipdb; ipdb.set_trace()
 
 # make_chainer_datasets and iterator
 threshold = np.int32(len(all_ary)/5*4)
@@ -87,9 +114,9 @@ test = tuple_dataset.TupleDataset(all_ary[threshold:], all_label[threshold:])
 train_iter = chainer.iterators.SerialIterator(train, 100, shuffle=True)
 test_iter = chainer.iterators.SerialIterator(test, 100, repeat=False, shuffle=False)
 
-updater = training.StandardUpdater(train_iter, optimizer, device=-1)
-trainer = training.Trainer(updater, (500, 'epoch'), out='result3')
-trainer.extend(extensions.Evaluator(test_iter, classify_model, device=-1))
+updater = training.StandardUpdater(train_iter, optimizer, device=0)
+trainer = training.Trainer(updater, (40, 'epoch'), out='result3')
+trainer.extend(extensions.Evaluator(test_iter, classify_model, device=0))
 trainer.extend(extensions.LogReport())
 trainer.extend(extensions.PlotReport(y_keys='main/loss', file_name='main_loss.png'))
 trainer.extend(extensions.PlotReport(y_keys='main/accuracy', file_name='main_acc.png'))
