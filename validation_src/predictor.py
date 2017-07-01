@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import numpy as np
 import csv
 import chainer
@@ -6,25 +7,19 @@ import chainer.links as L
 import sys
 import matplotlib.pyplot as plt
 
-# 利用するニューラルネットワーク
-class LaughNet(chainer.Chain):
-    def __init__(self):
-        super(LaughNet, self).__init__(
-            l1=L.LSTM(None, 200),
-            l2=L.Linear(None, 100),
-            l3=L.Linear(None, 2)
-        )
+"""
+データを実際に予測するときに利用するクラス
+    :param
+    predict_ary: csvからデータを取ってきて, 入力と正解をタプル形式で配列で持つクラス
+    plt_ary: matplotlibで表示するためにもつ配列
+    model: chainerでつくったモデルのインスタンスを格納
+    one_count: 正解データで"1"のラベルのもの
 
-    def __call__(self, x):
-        self.l1.reset_state()
-        h = self.l1(x)
-        h = F.dropout(self.l2(h))
-        h = self.l3(h)
-
-        return h
+    性能はrecall_rateで測定(TP/TP+TN)
+"""
 
 
-class PredicterClass(object):
+class PredictorClass(object):
     def __init__(self):
         self.predict_ary = []
         self.plt_ary = []
@@ -100,8 +95,6 @@ class PredicterClass(object):
         print('recall rate: ', len(x_ary1) / self.one_count)
         print('accuracy: ', (len(x_ary1)+len(x_ary0)) / len(self.plt_ary))
 
-        import ipdb; ipdb.set_trace()
-
         np_plt_x1 = np.array(x_ary1, dtype=np.float32)
         np_plt_y1 = np.array(y_ary1, dtype=np.float32)
 
@@ -116,14 +109,3 @@ class PredicterClass(object):
         plt.plot(np_incorrectx0, np_incorrecty0, 'o', color='g', alpha=0.5)
         plt.plot(np_incorrectx1, np_incorrecty1, 'o', color='m', alpha=0.5)
         plt.show()
-
-
-# testscript
-if __name__ == '__main__':
-    predict = PredicterClass()
-    model = LaughNet()
-    predict.load_model(model, 'movie_model')
-    predict.load_csv('validation.csv')
-    predict.predict()
-    predict.plot()
-
