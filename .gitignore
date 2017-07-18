@@ -9,5 +9,7 @@ predict
 params
 84Raw
 __pycache__
+train_*
+training_daily_*
 org_data
 confused_data
