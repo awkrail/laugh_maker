@@ -1,12 +1,15 @@
 import numpy as np
 import pandas as pd
 import random
+import csv
 from chainer.datasets import tuple_dataset
 
 '''
 データを保持して加工するクラス
 80% -> 訓練, テストデータとして利用
 20% -> validationのためのデータとして利用
+MatrixSensorData->84次元のデータ
+OneDimSensorData->平均して, 5秒ごとにサンプリングした時のデータ
 '''
 
 
@@ -60,3 +63,60 @@ class MatrixSensorData(object):
             iter_count += 1
 
         return tmp_50dim
+
+
+class OneDimSensorData(object):
+    """
+    センサーデータを訓練データとテストデータにわけるためのクラス
+    :param
+        self.ary0or1 -> 0or1のセンサーデータ(tuple, データ, ラベル)
+    :return
+        divide_train_and_test
+            訓練データ, 訓練ラベル, テストデータ, テストラベル
+    """
+    def __init__(self):
+        self.ary0 = []
+        self.ary1 = []
+        self.all = []
+
+    def load_csv(self):
+        with open('confused_data/Raw/0.csv', 'r') as f:
+            self.ary0 = [(np.array(row[0:50], dtype=np.float32), np.array(0, dtype=np.int32))
+                         for row in csv.reader(f)]
+
+        with open('confused_data/Raw/1.csv', 'r') as f:
+            self.ary1 = [(np.array(row[0:50], dtype=np.float32), np.array(1, dtype=np.int32))
+                         for row in csv.reader(f)]
+
+        self.all = self.ary0 + self.ary1
+
+    def shuffle(self):
+        random.shuffle(self.all)
+
+    def divide_train_and_test(self):
+        threshold = int(len(self.all)/5*4)
+        train = []
+        train_label = []
+        test = []
+        test_label = []
+        for i, data in enumerate(self.all):
+            if i < threshold:
+                train.append(data[0])
+                train_label.append(data[1])
+            else:
+                test.append(data[0])
+                test_label.append(data[1])
+
+        train = np.array(train, dtype=np.float32)
+        train_label = np.array(train_label, dtype=np.int32)
+        test = np.array(test, dtype=np.float32).reshape(10, 741, 50) # 全体-threshold分
+        test_label = np.array(test_label, dtype=np.int32).reshape(10, 741)
+
+        return train, train_label, test, test_label
+
+
+
+
+
+
+
