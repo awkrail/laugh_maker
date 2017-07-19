@@ -107,12 +107,20 @@ class OneDimSensorData(object):
                 test.append(data[0])
                 test_label.append(data[1])
 
+        # for recall rate
+        one_label_count = 0
+        # import ipdb; ipdb.set_trace()
+
+        for label in test_label:
+            if label == 1:
+                one_label_count += 1
+
         train = np.array(train, dtype=np.float32)
         train_label = np.array(train_label, dtype=np.int32)
         test = np.array(test, dtype=np.float32).reshape(10, 741, 50) # 全体-threshold分
         test_label = np.array(test_label, dtype=np.int32).reshape(10, 741)
 
-        return train, train_label, test, test_label
+        return train, train_label, test, test_label, one_label_count
 
 
 

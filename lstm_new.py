@@ -1,12 +1,13 @@
 import numpy as np
 import chainer
-import os
 import argparse
+import csv
 
 import chainer.functions as F
 import chainer.links as L
 from chainer import cuda
-from chainer import Variable
+from chainer import serializers
+
 from fix_data import OneDimSensorData
 
 """
@@ -16,8 +17,8 @@ class LSTM(chainer.Chain):
     def __init__(self):
         super().__init__(
             l1=L.Linear(1, 5),
-            l2=L.LSTM(5, 20),
-            l3=L.Linear(20, 1),
+            l2=L.LSTM(5, 30),
+            l3=L.Linear(30, 1),
             l4=L.Linear(1, 2)
         )
 
@@ -26,30 +27,31 @@ class LSTM(chainer.Chain):
         self.l2.reset_state()
         row = x.shape[0]
         col = x.shape[1]
-        for i in range(col-1):
+        for i in range(col):
             h = self.l1(xp.array(x[:, i].reshape(row, 1), dtype=xp.float32))
             h = self.l2(h)
             h = self.l3(h)
             h = self.l4(h)
         return [0 if data[0] > data[1] else 1 for data in h.data] # WATCH: あとでmapできるようにかきかえる
 
-
     def __call__(self, x, t):
         # ひとつのデータごとに誤差を計算する
         self.l2.reset_state()
         row = x.shape[0]
         col = x.shape[1]
-        loss = 0
-        for i in range(col-1):
+        accum_loss = None
+        for i in range(col):
             h = self.l1(xp.array(x[:, i].reshape(row, 1), dtype=xp.float32))
             h = self.l2(h)
             h = self.l3(h)
-            loss = F.mean_squared_error(h, xp.array(x[:, i+1].reshape(row, 1), dtype=xp.float32))
+            if i != col-1:
+                loss = F.mean_squared_error(h, xp.array(x[:, i+1].reshape(row, 1), dtype=xp.float32))
+                accum_loss = loss if accum_loss is None else accum_loss + loss
             h = self.l4(h)
-        loss += F.softmax_cross_entropy(h, xp.array(t, dtype=xp.int32))
+        accum_loss += F.softmax_cross_entropy(h, xp.array(t, dtype=xp.int32))
         # print(loss.data)
 
-        return loss
+        return accum_loss
 
 
 # gpu
@@ -62,7 +64,7 @@ args = parser.parse_args()
 one_dim_sensor = OneDimSensorData()
 one_dim_sensor.load_csv()
 one_dim_sensor.shuffle()
-train, train_label, test, test_label = one_dim_sensor.divide_train_and_test()
+train, train_label, test, test_label, one_label_counts = one_dim_sensor.divide_train_and_test()
 
 # model
 model = LSTM()
@@ -78,10 +80,15 @@ if args.gpu >= 0:
 # training loop
 display = 1000
 total_loss = 0
-epoch = 30
+epoch = 500
 n_size = len(train)
-batch_size = 500
+batch_size = 1000
 # question_num = len(test)
+
+loss_plt_ary = []
+accuracy_plt_ary = []
+recall_plt_ary = []
+
 
 for i in range(epoch):
     sffindx = np.random.permutation(n_size)
@@ -99,15 +106,37 @@ for i in range(epoch):
 
     # テストデータでチェック
     answer_num = 0
+    recall = 0
     for t_d, t_l in zip(test, test_label):
         answers = model.predictor(t_d)
         bool_ans = (answers==t_l)
         for bool in bool_ans:
             if bool:
                 answer_num += 1
-    print('main/loss {}, accuracy rate {}'.format(last_loss, answer_num/7410))
+        for answer, tl in zip(answers, t_l):
+            if answer == tl and answer:
+                recall += 1
+    print('main/loss {}, accuracy rate {}, recall rate {}, one_counts {}'.format(last_loss, answer_num/7410, recall/one_label_counts, one_label_counts))
+    loss_plt_ary.append(last_loss)
+    accuracy_plt_ary.append(answer_num/7410)
+    recall_plt_ary.append(recall/one_label_counts)
 
 
+serializers.save_npz("fixed_lstm_model_2", model)
+
+def write_csv(path, ary):
+    with open('results/lstm_fixed_result/%s.csv' % path, 'w') as f:
+        writer = csv.writer(f, lineterminator='\n')
+        writer.writerow(ary)
+
+write_csv('loss', loss_plt_ary)
+write_csv('accuracy', accuracy_plt_ary)
+write_csv('recall', recall_plt_ary)
+
+# csvにデータを書き込み
+with open('results/lstm_fixed_result/loss.csv', 'w') as f:
+    writer = csv.writer(f, lineterminator='\n')
+    writer
 
 
 
